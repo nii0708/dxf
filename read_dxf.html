@@ -1,0 +1,40 @@
+<input type="file" id="fileInput" />
+<script src="https://cdn.jsdelivr.net/npm/dxf-parser/dist/dxf-parser.min.js"></script>
+<script>
+  document.getElementById("fileInput").addEventListener("change", function (e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function (event) {
+      try {
+        const parser = new DxfParser();
+        const dxf = parser.parseSync(event.target.result);
+        console.log("dxf : ", dxf);
+        // Get vertices from entities
+        const data = dxf.entities.map((e) => e.vertices);
+        console.log("data:", data);
+        // Create closed polygons by adding first vertex to the end of each entity's vertices
+        const closedData = data.map((vertices) => {
+          if (vertices.length > 0) {
+            // Create a new array with all existing vertices plus the first one repeated at the end
+            return [...vertices, vertices[0]];
+          }
+          return vertices;
+        });
+
+        // Process the data with closed polygons
+        const dxf_data = closedData
+          .flat()
+          .map(({ x, y, z }) => ({ lat: x, long: y, z: z }));
+
+        console.log("Closed DXF:", closedData);
+        console.log("Parsed DXF:", dxf_data);
+        console.log("isi DXF", closedData[0]);
+      } catch (err) {
+        console.error("Error parsing DXF:", err.message);
+      }
+    };
+
+    reader.readAsText(file);
+  });
+</script>
